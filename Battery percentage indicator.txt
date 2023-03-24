@@ -1,0 +1,61 @@
+#define BLYNK_PRINT Serial          // Enable debug prints to Serial Monitor
+#include <ESP8266WiFi.h>           // Include the ESP8266 WiFi library
+#include <BlynkSimpleEsp8266.h>    // Include the Blynk library
+#include <Wire.h>                  // Include the Wire library for I2C communication
+#include <Adafruit_SSD1306.h>      // Include the Adafruit SSD1306 library for OLED display
+
+// OLED display initialization
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+// Define the pin for measuring voltage
+const int voltagePin = A0;
+
+// Define the voltage divider ratio
+const float voltageDividerRatio = 2.2;
+
+char auth[] = "_PoongyqhLHTQAAjFIjAFoqVBPg5dmjA";
+char ssid[] = "Islington-College";
+char pass[] = "I$LiNGT0N2023";
+
+
+void setup() {
+  Serial.begin(9600);             // Start Serial Monitor for debugging
+  Blynk.begin(auth, ssid, pass);  // Connect to Blynk server with WiFi credentials
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // Initialize the OLED display
+}
+
+void loop() {
+  Blynk.run();  // Run Blynk
+  // Read voltage from pin
+  float voltage = (analogRead(voltagePin) / 1023.0 * 3.3 * voltageDividerRatio);
+  // Calculate battery percentage
+  int batteryPercent = map(voltage * 1000, 3000, 4200, 0, 100);
+  // Print battery voltage and percentage to serial console
+  Serial.print("Battery Voltage: ");
+  Serial.print(voltage);
+  Serial.print(" V, ");
+  Serial.print("Battery Percentage: ");
+  Serial.print(batteryPercent);
+  Serial.println(" %");
+  // Update OLED display with battery voltage and percentage
+  display.clearDisplay();            // Clear the display before updating readings
+  display.setTextSize(1);            // Set the text size to 1
+  display.setTextColor(WHITE);       // Set the text color to white
+  display.setCursor(0, 0);           // Set the cursor to the top left corner of the display
+  display.print("Voltage: ");        // Print the voltage label on the display
+  display.print(voltage, 2);         // Print the voltage reading on the display with 2 decimal places
+  display.print(" V");               // Print the unit on the display
+  display.setCursor(0, 10);          // Set the cursor to the second line of the display
+  display.print("Percentage: ");     // Print the percentage label on the display
+  display.print(batteryPercent);     // Print the percentage reading on the display
+  display.print(" %");               // Print the percentage symbol on the display
+  display.display();                 // Display the updated readings on the OLED display
+  // Update Blynk app with battery percentage and voltage values
+  Blynk.virtualWrite(V0, batteryPercent);  // Update the virtual pin V0 with the battery percentage value
+  Blynk.virtualWrite(V1, voltage);         // Update the virtual pin V1 with the voltage value
+  // Delay for 1 second
+  delay(1000);
+}
+
+
+
