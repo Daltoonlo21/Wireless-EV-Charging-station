@@ -1,5 +1,45 @@
+/*************************************************************
+  WARNING!
+    It's very tricky to get it working. Please read this article:
+    http://help.blynk.cc/hardware-and-libraries/arduino/esp8266-with-at-firmware
+
+  You’ll need:
+   - Blynk IoT app (download from App Store or Google Play)
+   - Arduino Uno board
+   - Decide how to connect to Blynk
+     (USB, Ethernet, Wi-Fi, Bluetooth, ...)
+
+  There is a bunch of great example sketches included to show you how to get
+  started. Think of them as LEGO bricks  and combine them as you wish.
+  For example, take the Ethernet Shield sketch and combine it with the
+  Servo example, or choose a USB sketch and add a code from SendData
+  example.
+ *************************************************************/
+
+// Template ID, Device Name and Auth Token are provided by the Blynk.Cloud
+// See the Device Info tab, or Template settings
+#define BLYNK_TEMPLATE_ID "TMPLTUIZSpx9"
+#define BLYNK_TEMPLATE_NAME "battery monitor"
+#define BLYNK_AUTH_TOKEN "_PoongyqhLHTQAAjFIjAFoqVBPg5dmjA"
+
+// Comment this out to disable prints and save space
+#define BLYNK_PRINT Serial
+
+
+#include <ESP8266_Lib.h>
+#include <BlynkSimpleShieldEsp8266.h>
 #include <Wire.h> // Include the Wire library for I2C communication
 #include <LiquidCrystal_I2C.h> // Include the LiquidCrystal_I2C library for the I2C display
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "Nabin@ClassicTech";
+char pass[] = "classic@123";
 
 const int irSensor1 = 2; // Define the digital pin for IR sensor 1
 const int irSensor2 = 3; // Define the digital pin for IR sensor 2
@@ -8,8 +48,18 @@ int relay2 = 5;//define the digital pin for Relay for slot 1
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Initialize the I2C display with address 0x27, 16 columns, and 2 rows
 
-void setup() {
-  lcd.init();
+// or Software Serial on Uno, Nano...
+#include <SoftwareSerial.h>
+SoftwareSerial EspSerial(10, 11); // RX, TX
+
+// Your ESP8266 baud rate:
+#define ESP8266_BAUD 38400
+
+ESP8266 wifi(&EspSerial);
+
+void setup()
+{
+  lcd.begin();  
   lcd.backlight(); // Start the I2C display
   pinMode(irSensor1, INPUT); // Set the pin mode for IR sensor 1 to INPUT
   pinMode(irSensor2, INPUT); // Set the pin mode for IR sensor 2 to INPUT
@@ -19,9 +69,21 @@ void setup() {
   lcd.print("Welcome!"); // Print the welcome message
   delay(2000); // Wait 2 seconds
   lcd.clear(); // Clear the display
+  // Debug console
+  Serial.begin(115200);
+
+  // Set ESP8266 baud rate
+  EspSerial.begin(ESP8266_BAUD);
+  delay(10);
+
+  //Blynk.begin(auth, wifi, ssid, pass);
+  // You can also specify server:
+  Blynk.begin(auth, wifi, ssid, pass, "blynk.cloud", 80);
+  //Blynk.begin(auth, wifi, ssid, pass, IPAddress(192,168,1,100), 8080);
 }
 
-void loop() {
+void loop()
+{
   int ir1 = digitalRead(irSensor1); // Read the value from IR sensor 1
   int ir2 = digitalRead(irSensor2); // Read the value from IR sensor 2
   
@@ -45,4 +107,9 @@ void loop() {
     lcd.println("Available "); // Otherwise, print "Available"
     digitalWrite(5,LOW); // Off the relay if slot2 is empty
   }
+
+  Blynk.run();
+  // You can inject your own code or combine it with other sketches.
+  // Check other examples on how to communicate with Blynk. Remember
+  // to avoid delay() function!
 }
